@@ -25,7 +25,7 @@ public class CallbackTest {
     void shouldNotSubmitEmptyForm() {
         open("http://localhost:9999");
         $(".form").$(".button").click();
-        $("[data-test-id=order-success]").shouldNot(exist);
+        $("[data-test-id=order-success]").should(exist);
     }
 
     @ParameterizedTest
