@@ -16,6 +16,6 @@ public class CallbackTest {
         form.$("[data-test-id=phone] input").setValue("+79991234567");
         form.$("[data-test-id=agreement]").click();
         form.$(".button").click();
-        $("[data-test-id=order-success]").shouldHave(text("Ваша заявка успешно отправлена!"));
+        $("[data-test-id=order-success]").shouldHave(text("Ваша заявка успешно принята!"));
     }
 }
