@@ -1,6 +1,7 @@
 package ru.netology.web;
 
 import com.codeborne.selenide.SelenideElement;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -10,9 +11,13 @@ import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
 
 public class CallbackTest {
+    @BeforeEach
+    void setUp() {
+        open("http://localhost:9999");
+    }
+
     @Test
     void shouldSubmitValidForm() {
-        open("http://localhost:9999");
         SelenideElement form = $(".form");
         form.$("[data-test-id=name] input").setValue("Ивлев Мак-сим");
         form.$("[data-test-id=phone] input").setValue("+79991234567");
@@ -23,7 +28,6 @@ public class CallbackTest {
 
     @Test
     void shouldNotSubmitEmptyForm() {
-        open("http://localhost:9999");
         $(".form").$(".button").click();
         $("[data-test-id=order-success]").shouldNot(exist);
     }
@@ -35,13 +39,12 @@ public class CallbackTest {
             "Only spaces, '  '",
     })
     void shouldShowErrorIfInputtedInvalidName(String testName, String name) {
-        open("http://localhost:9999");
         SelenideElement form = $(".form");
         form.$("[data-test-id=name] input").setValue(name);
         form.$("[data-test-id=phone] input").setValue("+79991234567");
         form.$("[data-test-id=agreement]").click();
         form.$(".button").click();
-        form.$("[data-test-id=name]").shouldHave(cssClass("input_invalid"));
+        form.$("[data-test-id='name'].input_invalid .input__sub").shouldBe(visible);
     }
 
     @ParameterizedTest
@@ -54,22 +57,20 @@ public class CallbackTest {
             "Only Spaces, '  '",
     })
     void shouldShowErrorIfInputtedInvalidPhone(String testName, String phone) {
-        open("http://localhost:9999");
         SelenideElement form = $(".form");
         form.$("[data-test-id=name] input").setValue("Ивлев Максим");
         form.$("[data-test-id=phone] input").setValue(phone);
         form.$("[data-test-id=agreement]").click();
         form.$(".button").click();
-        form.$("[data-test-id=phone]").shouldHave(cssClass("input_invalid"));
+        form.$("[data-test-id=phone].input_invalid .input__sub").shouldBe(visible);
     }
 
     @Test
     void shouldChangeCheckboxTextColorIfNotChecked() {
-        open("http://localhost:9999");
         SelenideElement form = $(".form");
         form.$("[data-test-id=name] input").setValue("Ивлев Максим");
         form.$("[data-test-id=phone] input").setValue("+79991234567");
         form.$(".button").click();
-        form.$("[data-test-id=agreement]").shouldHave(cssClass("input_invalid"));
+        form.$("[data-test-id=agreement].input_invalid .checkbox__text").shouldBe(visible);
     }
 }
