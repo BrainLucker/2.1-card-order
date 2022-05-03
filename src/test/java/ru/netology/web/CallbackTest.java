@@ -1,5 +1,6 @@
 package ru.netology.web;
 
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.SelenideElement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,86 +11,82 @@ import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
 
+/* Запуск SUT:
+java -jar artifacts/app-order.jar
+*/
+
 public class CallbackTest {
+    private final String successOrderText = "Ваша заявка успешно отправлена!";
+    private final String requiredField = "Поле обязательно для заполнения";
+    private final String invalidNameError = "Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы.";
+    private final String invalidPhoneError = "Телефон указан неверно. Должно быть 11 цифр, например, +79012345678";
+    private final SelenideElement form = $(".form");
+    private final SelenideElement nameField = form.$("[data-test-id=name] input");
+    private final SelenideElement phoneField = form.$("[data-test-id=phone] input");
+    private final SelenideElement agreementCheckBox = form.$("[data-test-id=agreement]");
+    private final SelenideElement button = form.$(".button");
+    private final SelenideElement successMessage = $("[data-test-id=order-success]");
+
     @BeforeEach
-    void setUp() {
+    public void setUp() {
+        Configuration.holdBrowserOpen = true;
+        Configuration.browserSize = "1000x800";
         open("http://localhost:9999");
     }
 
     @Test
-    void shouldSubmitValidForm() {
-        SelenideElement form = $(".form");
-        form.$("[data-test-id=name] input").setValue("Ивлев Мак-сим");
-        form.$("[data-test-id=phone] input").setValue("+79991234567");
-        form.$("[data-test-id=agreement]").click();
-        form.$(".button").click();
-        $("[data-test-id=order-success]").shouldHave(text("Ваша заявка успешно отправлена!"));
+    public void shouldSubmitValidForm() {
+        nameField.setValue("Ивлев Мак-сим");
+        phoneField.setValue("+79991234567");
+        agreementCheckBox.click();
+        button.click();
+        successMessage.shouldHave(text(successOrderText));
     }
 
     @Test
-    void shouldNotSubmitEmptyForm() {
-        $(".form").$(".button").click();
-        $("[data-test-id=order-success]").shouldNot(exist);
-        $(".form").$("[data-test-id='name'].input_invalid .input__sub").shouldBe(visible).shouldHave(text("Поле обязательно для заполнения"));
+    public void shouldNotSubmitEmptyForm() {
+        button.click();
+        successMessage.shouldNot(exist);
+        nameField.parent().parent().$(".input__sub").shouldBe(visible).shouldHave(text(requiredField));
+
     }
 
     @ParameterizedTest
     @CsvSource({
-            "On English, Ivlev Maksim",
-            "With symbol, Ивлев М@ксим"
+            "On English, Ivlev Maksim, " + invalidNameError,
+            "With symbol, Ивлев М@ксим, " + invalidNameError,
+            "Spaces only, '  ', " + requiredField
     })
-    void shouldShowErrorIfInputtedInvalidName(String testName, String name) {
-        SelenideElement form = $(".form");
-        form.$("[data-test-id=name] input").setValue(name);
-        form.$("[data-test-id=phone] input").setValue("+79991234567");
-        form.$("[data-test-id=agreement]").click();
-        form.$(".button").click();
-        form.$("[data-test-id='name'].input_invalid .input__sub").shouldBe(visible).shouldHave(text("Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы."));
-    }
-
-    @Test
-    void shouldShowErrorIfInputtedEmptyName() {
-        SelenideElement form = $(".form");
-        form.$("[data-test-id=name] input").setValue("  ");
-        form.$("[data-test-id=phone] input").setValue("+79991234567");
-        form.$("[data-test-id=agreement]").click();
-        form.$(".button").click();
-        form.$("[data-test-id='name'].input_invalid .input__sub").shouldBe(visible).shouldHave(text("Поле обязательно для заполнения"));
+    public void shouldShowErrorIfInputtedInvalidName(String testName, String name, String errorText) {
+        nameField.setValue(name);
+        phoneField.setValue("+79991234567");
+        agreementCheckBox.click();
+        button.click();
+        nameField.parent().parent().$(".input__sub").shouldBe(visible).shouldHave(text(errorText));
     }
 
     @ParameterizedTest
     @CsvSource({
-            "Without plus, 79991234567",
-            "With letter, +7999123456o",
-            "With symbol, +7999123456.",
-            "Too short, +7999123456",
-            "Too long, +799912345678"
+            "Without plus, 79991234567, " + invalidPhoneError,
+            "With letter, +7999123456o, " + invalidPhoneError,
+            "With symbol, +7999123456., " + invalidPhoneError,
+            "Too short, +7999123456, " + invalidPhoneError,
+            "Too long, +799912345678, " + invalidPhoneError,
+            "Spaces only, '  ', " + requiredField
     })
-    void shouldShowErrorIfInputtedInvalidPhone(String testName, String phone) {
-        SelenideElement form = $(".form");
-        form.$("[data-test-id=name] input").setValue("Ивлев Максим");
-        form.$("[data-test-id=phone] input").setValue(phone);
-        form.$("[data-test-id=agreement]").click();
-        form.$(".button").click();
-        form.$("[data-test-id=phone].input_invalid .input__sub").shouldBe(visible).shouldHave(text("Телефон указан неверно. Должно быть 11 цифр, например, +79012345678"));
+    public void shouldShowErrorIfInputtedInvalidPhone(String testName, String phone, String errorText) {
+        nameField.setValue("Ивлев Максим");
+        phoneField.setValue(phone);
+        agreementCheckBox.click();
+        button.click();
+        phoneField.parent().parent().$(".input__sub").shouldBe(visible).shouldHave(text(errorText));
     }
 
     @Test
-    void shouldShowErrorIfInputtedEmptyPhone() {
-        SelenideElement form = $(".form");
-        form.$("[data-test-id=name] input").setValue("Ивлев Максим");
-        form.$("[data-test-id=phone] input").setValue("  ");
-        form.$("[data-test-id=agreement]").click();
-        form.$(".button").click();
-        form.$("[data-test-id=phone].input_invalid .input__sub").shouldBe(visible).shouldHave(text("Поле обязательно для заполнения"));
-    }
-
-    @Test
-    void shouldChangeCheckboxTextColorIfNotChecked() {
-        SelenideElement form = $(".form");
-        form.$("[data-test-id=name] input").setValue("Ивлев Максим");
-        form.$("[data-test-id=phone] input").setValue("+79991234567");
-        form.$(".button").click();
-        form.$("[data-test-id=agreement].input_invalid .checkbox__text").shouldBe(visible);
+    public void shouldChangeCheckboxTextColorIfNotChecked() {
+        nameField.setValue("Ивлев Максим");
+        phoneField.setValue("+79991234567");
+        button.click();
+        agreementCheckBox.parent().parent().$(".input__sub").shouldBe(visible);
     }
 }
